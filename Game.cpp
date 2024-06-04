@@ -1,11 +1,10 @@
 #include "Game.h"
 
-sf::CircleShape circle(300.0f, 360u);
+sf::Texture texture;
 
 void Begin(sf::RenderWindow& window) {
-    circle.setOrigin(sf::Vector2f(circle.getRadius(), circle.getRadius()));
-    circle.setPosition((sf::Vector2f)window.getSize() / 2.0f);
-    circle.setFillColor(sf::Color::Yellow);
+    if (!texture.loadFromFile("textures/brick.png"))
+        exit(-1);
 }
 
 
@@ -13,6 +12,6 @@ void Update(float deltaTime) {
 
 }
 
-void Render(sf::RenderWindow& window) {
-    window.draw(circle);
+void Render(Renderer &renderer) {
+    renderer.Draw(texture, sf::Vector2f(), sf::Vector2f(2,2));
 }

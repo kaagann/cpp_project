@@ -25,7 +25,12 @@ FetchContent_MakeAvailable(SFML)
 add_executable(Main main.cpp
         Game.cpp
         Game.h
-        Game.h)
+        Game.h
+        Camera.cpp
+        Camera.h
+        Renderer.cpp
+        Renderer.h
+        Renderer.h)
 
 target_link_libraries(Main fmt)
 target_link_libraries(Main sfml-graphics)

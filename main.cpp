@@ -1,6 +1,8 @@
 #include <SFML/Graphics.hpp>
 
+#include "Camera.h"
 #include "Game.h"
+#include "Renderer.h"
 
 auto main() -> int {
     auto window = sf::RenderWindow(
@@ -8,6 +10,13 @@ auto main() -> int {
                sf::Style::Default, sf::ContextSettings(0, 0, 8)
        );
     sf::Clock deltaClock;
+    Camera camera;
+    Renderer renderer(window);
+
+    sf::Texture texture;
+
+
+
 
 
     Begin(window);
@@ -21,9 +30,11 @@ auto main() -> int {
                 window.close();
         }
 
+
+        window.setView(camera.GetView(window.getSize()));
         Update(deltaTime);
         window.clear();
-        Render(window);
+        Render(renderer);
         window.display();
 
     }
