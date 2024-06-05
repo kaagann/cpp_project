@@ -131,7 +131,7 @@ void Physics::DebugDraw(Renderer& renderer)
 	if (!debugDraw)
 	{
 		debugDraw = new MyDebugDraw(renderer.target);
-		debugDraw->SetFlags(b2Draw::e_shapeBit);
+		debugDraw->SetFlags(0u);
 		world.SetDebugDraw(debugDraw);
 	}
 

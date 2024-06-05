@@ -31,7 +31,7 @@ auto main() -> int {
 
 
         Update(deltaTime);
-        window.clear();
+        window.clear(sf::Color::Blue);
         window.setView(camera.GetView(window.getSize()));
         Render(renderer);
         window.display();

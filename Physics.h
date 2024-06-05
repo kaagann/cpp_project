@@ -6,6 +6,11 @@
 
 class MyDebugDraw;
 
+class CollisionListener {
+public:
+
+};
+
 class Physics{
 public:
     static void Init();

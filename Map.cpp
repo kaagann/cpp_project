@@ -47,7 +47,7 @@ void Map::Draw(Renderer& renderer)
         {
             if (cell)
             {
-                renderer.Draw(Resources::textures["brick.png"], sf::Vector2f(cellSize * x + cellSize / 2.0f,
+                renderer.Draw(Resources::textures["terrain1.png"], sf::Vector2f(cellSize * x + cellSize / 2.0f,
                     cellSize * y + cellSize / 2.0f), sf::Vector2f(cellSize, cellSize));
             }
             y++;

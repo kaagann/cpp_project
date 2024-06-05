@@ -43,6 +43,7 @@ void Character::Begin() {
     body->CreateFixture(&fixture_def);
 
     circleShape.m_p.Set(0.0f, 11.5f);
+    fixture_def.userData;
     body->CreateFixture(&fixture_def);
 
 }
