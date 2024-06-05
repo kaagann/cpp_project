@@ -6,11 +6,10 @@
 
 auto main() -> int {
     auto window = sf::RenderWindow(
-               sf::VideoMode({1200, 900}), "Crazy Frog",
+               sf::VideoMode({1280, 720}), "Crazy Frog",
                sf::Style::Default, sf::ContextSettings(0, 0, 8)
        );
     sf::Clock deltaClock;
-    Camera camera;
     Renderer renderer(window);
 
     sf::Texture texture;
@@ -18,7 +17,7 @@ auto main() -> int {
 
 
 
-
+    window.setFramerateLimit(60);
     Begin(window);
     while (window.isOpen()) {
         float deltaTime = deltaClock.restart().asSeconds();
@@ -31,9 +30,9 @@ auto main() -> int {
         }
 
 
-        window.setView(camera.GetView(window.getSize()));
         Update(deltaTime);
         window.clear();
+        window.setView(camera.GetView(window.getSize()));
         Render(renderer);
         window.display();
 
