@@ -4,7 +4,6 @@
 
 #include "Character.h"
 
-#include "Physics.h"
 #include "Resources.h"
 #include "box2d/b2_body.h"
 #include "box2d/b2_polygon_shape.h"
@@ -15,7 +14,7 @@
 
 
 const float movementSpeed = 100.0f;
-const float jumpVelocity = 100.0f;
+const float jumpVelocity = 150.0f;
 
 
 void Character::Begin() {
@@ -26,25 +25,31 @@ void Character::Begin() {
     body_def.fixedRotation = true;
     body = Physics::world.CreateBody(&body_def);
 
-    b2PolygonShape shape{};
-    shape.SetAsBox(11, 16);
-
     b2FixtureDef fixture_def{};
-    fixture_def.shape = &shape;
     fixture_def.density = 1.0f;
-    fixture_def.friction = 0.3f;
-    body->CreateFixture(&fixture_def);
+    fixture_def.friction = 0.0f;
 
 
     b2CircleShape circleShape{};
-    circleShape.m_radius = 5.0f;
-    circleShape.m_p.Set(0.0f, -11.5f);
+    circleShape.m_radius = 10.0f;
+    circleShape.m_p.Set(0.0f, -7.0f);
     fixture_def.shape = &circleShape;
     body->CreateFixture(&fixture_def);
 
-    circleShape.m_p.Set(0.0f, 11.5f);
-    fixture_def.userData;
+    circleShape.m_p.Set(0.0f, 7.0f);
     body->CreateFixture(&fixture_def);
+
+    b2PolygonShape shape{};
+    shape.SetAsBox(10, 16);
+    fixture_def.shape = &shape;
+    body->CreateFixture(&fixture_def);
+
+    shape.SetAsBox(10.0f, 17.5f, b2Vec2(0.0f, 1.0f), 0.0f);
+    fixture_def.userData.pointer = (uintptr_t)this;
+    fixture_def.isSensor = true;
+    body->CreateFixture(&fixture_def);
+
+
 
 }
 
@@ -62,7 +67,7 @@ void Character::Update(float deltaTime) {
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
         velocity.x -= move;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && isGrounded)
         velocity.y = -jumpVelocity;
 
     body->SetLinearVelocity(velocity);
@@ -78,6 +83,18 @@ void Character::Update(float deltaTime) {
 void Character::Draw(Renderer &renderer) {
     renderer.Draw(Resources::textures["idle1.png"], position, sf::Vector2f(32.0f, 32.0f), angle);
 }
+
+void Character::OnBeginContact() {
+    fmt::println("yerdeyim");
+    isGrounded = true;
+}
+
+void Character::OnEndContact() {
+    fmt::println("havadayım");
+    isGrounded = false;
+}
+
+
 
 
 

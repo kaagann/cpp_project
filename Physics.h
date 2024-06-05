@@ -11,6 +11,13 @@ public:
 
 };
 
+class ContactListener
+{
+public:
+    virtual void OnBeginContact() = 0;
+    virtual void OnEndContact() = 0;
+};
+
 class Physics{
 public:
     static void Init();

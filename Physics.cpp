@@ -6,8 +6,10 @@
 
 #include "box2d/b2_draw.h"
 #include "box2d/b2_world.h"
+#include <box2d/b2_world_callbacks.h>
+#include <box2d/b2_contact.h>
 
-b2World Physics::world{b2Vec2(0.0f, 200.2f)};
+b2World Physics::world{b2Vec2(0.0f, 100.2f)};
 MyDebugDraw* Physics::debugDraw{};
 
 class MyDebugDraw
@@ -118,12 +120,39 @@ private:
 	sf::RenderTarget& target;
 };
 
+class MyGlobalContactListener: public b2ContactListener {
+	virtual void BeginContact(b2Contact *contact) override {
+		ContactListener* listener = (ContactListener*) contact->GetFixtureA()->GetUserData().pointer;
+
+		if (listener)
+			listener->OnBeginContact();
+
+		listener = (ContactListener*) contact->GetFixtureB()->GetUserData().pointer;
+
+		if (listener)
+			listener->OnBeginContact();
+	}
+
+	virtual void EndContact(b2Contact *contact) override {
+		ContactListener* listener = (ContactListener*) contact->GetFixtureA()->GetUserData().pointer;
+
+		if (listener)
+			listener->OnEndContact();
+
+		listener = (ContactListener*) contact->GetFixtureB()->GetUserData().pointer;
+
+		if (listener)
+			listener->OnEndContact();
+	};
+};
+
 void Physics::Init() {
 
 }
 
 void Physics::Update(float deltaTime) {
-    world.Step(deltaTime, 6,2);
+    world.Step(deltaTime, 8,4);
+	world.SetContactListener(new MyGlobalContactListener());
 }
 
 void Physics::DebugDraw(Renderer& renderer)
@@ -131,7 +160,8 @@ void Physics::DebugDraw(Renderer& renderer)
 	if (!debugDraw)
 	{
 		debugDraw = new MyDebugDraw(renderer.target);
-		debugDraw->SetFlags(0u);
+		debugDraw->SetFlags(b2Draw::e_shapeBit);
+		//debugDraw->SetFlags(0u);
 		world.SetDebugDraw(debugDraw);
 	}
 
