@@ -36,20 +36,55 @@ void Map::CreateMap(size_t width, size_t height) {
     }
 }
 
-void Map::Draw(Renderer& renderer) {
-    int y = 0;
-    for (const auto& row : grid) { // grid'in sütunları yerine satırlarını kullan
-        int x = 0;
-        for (const auto& cell : row) { // sütun hücreleri yerine satır hücrelerini kullan
-            if (cell) {
-                renderer.Draw(Resources::textures["terrain.png"], sf::Vector2f(cellSize * x + cellSize / 2.0f,
-                    cellSize * y + cellSize / 2.0f), sf::Vector2f(cellSize * 2 , cellSize * 2), sf::IntRect(16,16,16,16));
+
+void Map::Draw(Renderer& renderer)
+{
+    int x = 0;
+    for (const auto& column : grid)
+    {
+        int y = 0;
+        for (const auto& cell : column)
+        {
+            if (cell)
+            {
+                renderer.Draw(Resources::textures["brick.png"], sf::Vector2f(cellSize * x + cellSize / 2.0f,
+                    cellSize * y + cellSize / 2.0f), sf::Vector2f(cellSize, cellSize));
             }
-            x++;
+            y++;
         }
-        y++;
+        x++;
     }
 }
+
+sf::Vector2f Map::CreateFromImage(const sf::Image& image) {
+    grid.clear();
+
+    grid = std::vector(image.getSize().x, std::vector(image.getSize().y, 0));
+    sf::Vector2f characterPosition;
+
+
+    for (size_t x = 0; x < grid.size(); x++) {
+        for (size_t y = 0; y < grid[x].size(); y++) {
+            sf::Color color = image.getPixel(x,y);
+            if (color == sf::Color::Black) {
+                grid[x][y] = 1;
+                b2BodyDef body_def{};
+                body_def.position.Set(cellSize * x + cellSize / 2.0f,
+                    cellSize * y + cellSize / 2.0f);
+                b2Body* body = Physics::world.CreateBody(&body_def);
+                b2PolygonShape shape{};
+                shape.SetAsBox(cellSize / 2.0f, cellSize / 2.0f);
+                body->CreateFixture(&shape, 0);
+            }
+            else if (color == sf::Color::Red)
+                characterPosition = sf::Vector2f(cellSize * x + cellSize / 2.0f,
+                    cellSize * y + cellSize / 2.0f);
+        }
+    }
+
+    return characterPosition;
+}
+
 
 sf::Vector2f Map::LoadFromFile(const std::string& fileName) {
     namespace fs = std::filesystem;

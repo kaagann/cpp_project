@@ -9,7 +9,7 @@
 
 
 Map map(16.0f);
-Camera camera(250.0f);
+Camera camera(320.0f);
 Character character;
 
 void Begin(sf::RenderWindow& window) {
@@ -22,7 +22,11 @@ void Begin(sf::RenderWindow& window) {
 
     Physics::Init();
     //map.CreateMap(10, 10);
-    character.position = map.LoadFromFile("../map.txt");
+    //character.position = map.LoadFromFile("../map.txt");
+    sf::Image image;
+    image.loadFromFile("../textures/map.png");
+    character.position = map.CreateFromImage(image);
+
     character.Begin();
 }
 
@@ -37,4 +41,6 @@ void Update(float deltaTime) {
 void Render(Renderer &renderer) {
     map.Draw(renderer);
     character.Draw(renderer);
+
+    Physics::DebugDraw(renderer);
 }
