@@ -1,100 +1,234 @@
-//
-// Created by kagan on 4.06.2024.
-//
-
 #include "Character.h"
-
+#include "Collisions.h"
 #include "Resources.h"
-#include "box2d/b2_body.h"
-#include "box2d/b2_polygon_shape.h"
-#include "box2d/b2_circle_shape.h"
-#include "box2d/b2_world.h"
-#include "box2d/b2_fixture.h"
+#include "fmt/ostream.h"
 #include "fmt/printf.h"
 
-
 const float movementSpeed = 100.0f;
-const float jumpVelocity = 150.0f;
-
+const float gravity = 400.0f; // Yerçekimi kuvvetini artırarak daha hızlı düşüş sağlar
 
 void Character::Begin() {
-    b2BodyDef body_def{};
+    health = 1;
+    runAnimation = Animation(1.2f, {
+        AnimFrame(1.1f, Resources::textures["run.png"]),
+        AnimFrame(1.0f, Resources::textures["run1.png"]),
+        AnimFrame(0.9f, Resources::textures["run2.png"]),
+        AnimFrame(0.8f, Resources::textures["run3.png"]),
+        AnimFrame(0.7f, Resources::textures["run4.png"]),
+        AnimFrame(0.6f, Resources::textures["run5.png"]),
+        AnimFrame(0.5f, Resources::textures["run6.png"]),
+        AnimFrame(0.4f, Resources::textures["run7.png"]),
+        AnimFrame(0.3f, Resources::textures["run8.png"]),
+        AnimFrame(0.2f, Resources::textures["run9.png"]),
+        AnimFrame(0.1f, Resources::textures["run10.png"]),
+        AnimFrame(0.0f, Resources::textures["run11.png"]),
+    });
 
-    body_def.type = b2_dynamicBody;
-    body_def.position.Set(position.x, position.y);
-    body_def.fixedRotation = true;
-    body = Physics::world.CreateBody(&body_def);
+    idleAnimation = Animation(1.1f, {
+        AnimFrame(1.0f, Resources::textures["idle.png"]),
+        AnimFrame(0.9f, Resources::textures["idle1.png"]),
+        AnimFrame(0.8f, Resources::textures["idle2.png"]),
+        AnimFrame(0.7f, Resources::textures["idle3.png"]),
+        AnimFrame(0.6f, Resources::textures["idle4.png"]),
+        AnimFrame(0.5f, Resources::textures["idle5.png"]),
+        AnimFrame(0.4f, Resources::textures["idle6.png"]),
+        AnimFrame(0.3f, Resources::textures["idle7.png"]),
+        AnimFrame(0.2f, Resources::textures["idle8.png"]),
+        AnimFrame(0.1f, Resources::textures["idle9.png"]),
+        AnimFrame(0.0f, Resources::textures["idle10.png"]),
+    });
 
-    b2FixtureDef fixture_def{};
-    fixture_def.density = 1.0f;
-    fixture_def.friction = 0.0f;
+    hitAnimation = Animation(0.7f, {
+        AnimFrame(0.6f, Resources::textures["hit.png"]),
+        AnimFrame(0.5f, Resources::textures["hit1.png"]),
+        AnimFrame(0.4f, Resources::textures["hit2.png"]),
+        AnimFrame(0.3f, Resources::textures["hit3.png"]),
+        AnimFrame(0.2f, Resources::textures["hit4.png"]),
+        AnimFrame(0.1f, Resources::textures["hit5.png"]),
+        AnimFrame(0.0f, Resources::textures["hit6.png"]),
+    });
 
-
-    b2CircleShape circleShape{};
-    circleShape.m_radius = 10.0f;
-    circleShape.m_p.Set(0.0f, -7.0f);
-    fixture_def.shape = &circleShape;
-    body->CreateFixture(&fixture_def);
-
-    circleShape.m_p.Set(0.0f, 7.0f);
-    body->CreateFixture(&fixture_def);
-
-    b2PolygonShape shape{};
-    shape.SetAsBox(10, 16);
-    fixture_def.shape = &shape;
-    body->CreateFixture(&fixture_def);
-
-    shape.SetAsBox(10.0f, 17.5f, b2Vec2(0.0f, 1.0f), 0.0f);
-    fixture_def.userData.pointer = (uintptr_t)this;
-    fixture_def.isSensor = true;
-    body->CreateFixture(&fixture_def);
+    shape.setSize(sf::Vector2f(16.0f, 32.0f));
+    shape.setOrigin(8.0f, 16.0f); // Merkezden döndürme ve konumlandırma
+    shape.setFillColor(sf::Color::Green); // Görünürlük için renk
+    shape.setPosition(position);
+    textureToDraw = Resources::textures["idle1.png"];
+}
 
 
 
+bool CheckCollision(float x, float y, float width, float height) {
+    auto CELL_SIZE = 16.0f;
+    int tileColumnStart = (int)(x / CELL_SIZE);
+    int tileColumnEnd = (int)((x + width) / CELL_SIZE) + 1;
+    int tileRowStart = (int)(y / CELL_SIZE);
+    int tileRowEnd = (int)((y + height) / CELL_SIZE) + 1;
+
+    for (int column = tileColumnStart; column < tileColumnEnd; column++) {
+        for (int row = tileRowStart; row < tileRowEnd; row++) {
+            if (Collisions::mapGrid[column][row]) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+Object* CheckCollectableCollision(float x, float y, float width, float height) {
+    auto CELL_SIZE = 16.0f;
+    int tileColumnStart = (int)(x / CELL_SIZE);
+    int tileColumnEnd = (int)((x + width) / CELL_SIZE) + 1;
+    int tileRowStart = (int)(y / CELL_SIZE);
+    int tileRowEnd = (int)((y + height) / CELL_SIZE) + 1;
+
+    for (int column = tileColumnStart; column < tileColumnEnd; column++) {
+        for (int row = tileRowStart; row < tileRowEnd; row++) {
+            if (Collisions::objects[column][row] != nullptr) {
+                if (Collisions::objects[column][row]->type == Object::COLLECTABLE || Collisions::objects[column][row]->type == Object::JUMP_BUFF) {
+                    Object* obj = Collisions::objects[column][row];
+                    Collisions::objects[column][row] = nullptr; // Collectable item kaldırılıyor
+                    return obj;
+                } else if (Collisions::objects[column][row]->type == Object::TRAP) {
+                    return Collisions::objects[column][row];
+                }
+            }
+        }
+    }
+
+    return nullptr;
 }
 
 void Character::Update(float deltaTime) {
-    float move = movementSpeed;
+    float move = movementSpeed * deltaTime;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift))
-        move *= 2;
+    sf::Vector2f newPosition = position;
 
-    b2Vec2 velocity = body->GetLinearVelocity();
-    velocity.x = 0.0f;
+    runAnimation.Update(deltaTime);
+    idleAnimation.Update(deltaTime);
+    hitAnimation.Update(deltaTime);
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-        velocity.x += move;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-        velocity.x -= move;
+    bool isMoving = false;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && isGrounded)
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+        newPosition.x -= move;
+        facingLeft = true;
+        isMoving = true;
+    }
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+        newPosition.x += move;
+        facingLeft = false;
+        isMoving = true;
+    }
+
+    // Zıplama kontrolü
+    if ((sf::Keyboard::isKeyPressed(sf::Keyboard::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) && isGrounded) {
         velocity.y = -jumpVelocity;
+        isGrounded = false;
+    }
 
-    body->SetLinearVelocity(velocity);
+    // Yerçekimini uygula
+    velocity.y += gravity * deltaTime;
+    newPosition.y += velocity.y * deltaTime;
 
+    // Çarpışma kontrolleri (yatay)
+    if (CheckCollision(newPosition.x - shape.getSize().x / 2, position.y - shape.getSize().y / 2, shape.getSize().x, shape.getSize().y)) {
+        // Çarpışma varsa yatay pozisyonu geri al
+        newPosition.x = position.x;
+    }
 
-    position = sf::Vector2f(body->GetPosition().x, body->GetPosition().y);
-    angle = body->GetAngle() * (180.0f / M_PI);
+    // Çarpışma kontrolleri (dikey)
+    if (CheckCollision(position.x - shape.getSize().x / 2, newPosition.y - shape.getSize().y / 2, shape.getSize().x, shape.getSize().y)) {
+        // Çarpışma varsa dikey pozisyonu geri al
+        newPosition.y = position.y;
+        velocity.y = 0; // Zıplama hızını sıfırla
+        isGrounded = true;
+        jumpCount = 0; // Zıplama sayacını sıfırla
+    } else {
+        isGrounded = false;
+    }
 
+    // Yeni pozisyonu güncelle
+    position = newPosition;
+    shape.setPosition(position);
 
+    Object* collidedObject = CheckCollectableCollision(newPosition.x - shape.getSize().x / 2, newPosition.y - shape.getSize().y / 2, shape.getSize().x, shape.getSize().y);
+    if (collidedObject != nullptr) {
+        if (collidedObject->type == Object::COLLECTABLE) {
+            fmt::print("Collectable item alındı!");
+            cherryCount += 1;
+        } else if (collidedObject->type == Object::TRAP) {
+            if (!isHit)
+                health -= 1; // Canı 1 azalt
+            isHit = true;
+            hitTime = 0.0f; // Hit süresini başlat
+            fmt::print("Tuzak: Can azaldı, kalan can: {}\n", health);
+        } else if (collidedObject->type == Object::JUMP_BUFF) {
+            jumpBuffActive = true;
+            jumpBuffTime = 0.0f; // Jump buff süresini başlat
+            jumpVelocity *= 1.2; // Zıplama hızını iki katına çıkar
+        }
+    }
 
+    if (jumpBuffActive) {
+        jumpBuffTime += deltaTime;
+        if (jumpBuffTime >= jumpBuffDuration) {
+            jumpBuffActive = false;
+            jumpVelocity /= 1.2; // Zıplama hızını eski haline getir
+        }
+    }
+
+    if (health <= 0) {
+        isDead = true;
+    }
+
+    if (isHit) {
+        hitTime += deltaTime;
+        if (hitTime < hitDuration) {
+            textureToDraw = hitAnimation.GetTexture();
+        } else {
+            isHit = false;
+        }
+    } else {
+        if (velocity.y < 0) {
+            textureToDraw = Resources::textures["jump.png"];
+        } else if (velocity.y > 0.2f && !isGrounded) {
+            textureToDraw = Resources::textures["fall.png"];
+        } else if (isMoving) {
+            textureToDraw = runAnimation.GetTexture();
+        } else {
+            textureToDraw = idleAnimation.GetTexture();
+        }
+    }
 }
 
 void Character::Draw(Renderer &renderer) {
-    renderer.Draw(Resources::textures["idle1.png"], position, sf::Vector2f(32.0f, 32.0f), angle);
+    renderer.Draw(textureToDraw, position, sf::Vector2f(facingLeft ? -32.0f : 32.0f, 32.0f), angle);
 }
 
-void Character::OnBeginContact() {
-    fmt::println("yerdeyim");
-    isGrounded = true;
+sf::FloatRect Character::GetBounds() {
+    return sf::FloatRect(position.x - shape.getSize().x / 2, position.y - shape.getSize().y / 2, shape.getSize().x, shape.getSize().y);
 }
 
-void Character::OnEndContact() {
-    fmt::println("havadayım");
+int Character::GetCherryCount() {
+    return cherryCount;
+}
+
+int Character::GetHealth() {
+    return health;
+}
+
+void Character::Reset() {
+    health = 1;
+    cherryCount = 0;
     isGrounded = false;
+    isHit = false;
+    hitTime = 0.0f;
+    if (jumpBuffActive)
+        jumpVelocity /= 1.2;
+    jumpBuffActive = false;
+    jumpBuffTime = 0.0f;
+    velocity = sf::Vector2f(0.0f, 0.0f);
+    isDead = false;
 }
-
-
-
-
-
