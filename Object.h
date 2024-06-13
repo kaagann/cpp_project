@@ -8,6 +8,8 @@ public:
         COLLECTABLE,
         TRAP,
         JUMP_BUFF,
+        END_POINT,
+        ROCK_HEAD,
     };
 
     Object(ObjectType type) : type(type) {}

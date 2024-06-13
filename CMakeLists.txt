@@ -53,8 +53,11 @@ add_executable(Main
         RockHead.h
         OrangeItem.cpp
         OrangeItem.h
+        EndPoint.cpp
+        EndPoint.h
+        EndPoint.h
 )
 
 # Kütüphaneleri bağlama
 target_link_libraries(Main PRIVATE fmt)
-target_link_libraries(Main PRIVATE sfml-graphics sfml-window sfml-system sfml-audio)
+target_link_libraries(Main PRIVATE sfml-graphics sfml-window sfml-system)

@@ -1,5 +1,3 @@
-#pragma once
-
 #include <SFML/Graphics.hpp>
 #include "Animation.h"
 #include "Map.h"
@@ -13,20 +11,19 @@ public:
     void Reset();
     int GetCherryCount();
     int GetHealth();
-
-
+    void ResetJumpCount(); // New function to reset jump count
 
     sf::Vector2f position{};
     sf::FloatRect GetBounds();
 
     float angle{};
-    int jumpCount = 0; // Zıplama sayacı
-    const int maxJumpCount = 2; // Maksimum zıplama sayısı
     bool isDead = false;
+
 private:
     Animation runAnimation;
     Animation idleAnimation;
     Animation hitAnimation;
+    Animation dJumpAnimation;
     sf::Texture textureToDraw{};
 
     bool isGrounded = false;
@@ -37,6 +34,7 @@ private:
 
     bool facingLeft = false;
     int health; // Karakterin canı
+    int defaultHealth = 10;
     int cherryCount = 0;
 
     bool isHit = false; // Hit bayrağı
@@ -47,5 +45,9 @@ private:
     float jumpBuffTime = 0.0f;
     const float jumpBuffDuration = 10.0f;
     float jumpVelocity = 200.0f;
+
+    int jumpCount = 0; // Zıplama sayacı
+    const int maxJumpCount = 2; // Maksimum zıplama sayısı
+    bool jumpPressed = false; // Zıplama tuşunun önceki durumu
 
 };

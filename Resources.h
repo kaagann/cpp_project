@@ -7,6 +7,6 @@
 class Resources {
 public:
     static std::unordered_map<std::string, sf::Texture> textures;
-    static std::unordered_map<std::string, sf::SoundBuffer> sounds;
+    //static std::unordered_map<std::string, sf::SoundBuffer> sounds;
 };
 

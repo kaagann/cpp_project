@@ -1,14 +1,18 @@
 #include "Character.h"
 #include "Collisions.h"
 #include "Resources.h"
+#include "RockHead.h"
 #include "fmt/ostream.h"
 #include "fmt/printf.h"
 
 const float movementSpeed = 100.0f;
-const float gravity = 400.0f; // Yerçekimi kuvvetini artırarak daha hızlı düşüş sağlar
+const float gravity = 400.0f;
+
+extern void LoadMap(const std::string& mapFile);
+
 
 void Character::Begin() {
-    health = 1;
+    health = defaultHealth;
     runAnimation = Animation(1.2f, {
         AnimFrame(1.1f, Resources::textures["run.png"]),
         AnimFrame(1.0f, Resources::textures["run1.png"]),
@@ -48,6 +52,15 @@ void Character::Begin() {
         AnimFrame(0.0f, Resources::textures["hit6.png"]),
     });
 
+    dJumpAnimation = Animation(0.6f, {
+        AnimFrame(0.5f, Resources::textures["djump.png"]),
+        AnimFrame(0.4f, Resources::textures["djump1.png"]),
+        AnimFrame(0.3f, Resources::textures["djump2.png"]),
+        AnimFrame(0.2f, Resources::textures["djump3.png"]),
+        AnimFrame(0.1f, Resources::textures["djump4.png"]),
+        AnimFrame(0.0f, Resources::textures["djump5.png"]),
+    });
+
     shape.setSize(sf::Vector2f(16.0f, 32.0f));
     shape.setOrigin(8.0f, 16.0f); // Merkezden döndürme ve konumlandırma
     shape.setFillColor(sf::Color::Green); // Görünürlük için renk
@@ -55,6 +68,9 @@ void Character::Begin() {
     textureToDraw = Resources::textures["idle1.png"];
 }
 
+void Character::ResetJumpCount() {
+    jumpCount = 0;
+}
 
 
 bool CheckCollision(float x, float y, float width, float height) {
@@ -87,9 +103,9 @@ Object* CheckCollectableCollision(float x, float y, float width, float height) {
             if (Collisions::objects[column][row] != nullptr) {
                 if (Collisions::objects[column][row]->type == Object::COLLECTABLE || Collisions::objects[column][row]->type == Object::JUMP_BUFF) {
                     Object* obj = Collisions::objects[column][row];
-                    Collisions::objects[column][row] = nullptr; // Collectable item kaldırılıyor
+                    Collisions::objects[column][row] = nullptr;
                     return obj;
-                } else if (Collisions::objects[column][row]->type == Object::TRAP) {
+                } else if (Collisions::objects[column][row]) {
                     return Collisions::objects[column][row];
                 }
             }
@@ -107,6 +123,7 @@ void Character::Update(float deltaTime) {
     runAnimation.Update(deltaTime);
     idleAnimation.Update(deltaTime);
     hitAnimation.Update(deltaTime);
+    dJumpAnimation.Update(deltaTime);
 
     bool isMoving = false;
 
@@ -123,9 +140,17 @@ void Character::Update(float deltaTime) {
     }
 
     // Zıplama kontrolü
-    if ((sf::Keyboard::isKeyPressed(sf::Keyboard::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) && isGrounded) {
+    bool jumpKeyPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Space);
+    if (jumpKeyPressed && !jumpPressed && (isGrounded || jumpCount < maxJumpCount)) {
+        fmt::print("jump count: {}\n", jumpCount);
         velocity.y = -jumpVelocity;
+        jumpCount++; // Zıplama sayacını artır
         isGrounded = false;
+        jumpPressed = true; // Zıplama tuşunun basıldığını işaretle
+    }
+
+    if (!jumpKeyPressed) {
+        jumpPressed = false; // Zıplama tuşunun bırakıldığını işaretle
     }
 
     // Yerçekimini uygula
@@ -144,14 +169,12 @@ void Character::Update(float deltaTime) {
         newPosition.y = position.y;
         velocity.y = 0; // Zıplama hızını sıfırla
         isGrounded = true;
-        jumpCount = 0; // Zıplama sayacını sıfırla
+        ResetJumpCount();
     } else {
         isGrounded = false;
     }
 
-    // Yeni pozisyonu güncelle
-    position = newPosition;
-    shape.setPosition(position);
+
 
     Object* collidedObject = CheckCollectableCollision(newPosition.x - shape.getSize().x / 2, newPosition.y - shape.getSize().y / 2, shape.getSize().x, shape.getSize().y);
     if (collidedObject != nullptr) {
@@ -168,8 +191,23 @@ void Character::Update(float deltaTime) {
             jumpBuffActive = true;
             jumpBuffTime = 0.0f; // Jump buff süresini başlat
             jumpVelocity *= 1.2; // Zıplama hızını iki katına çıkar
+        } else if (collidedObject->type == Object::ROCK_HEAD) {
+            auto rockHead = dynamic_cast<RockHead*>(collidedObject);
+            if (rockHead && position.y < rockHead->GetBounds().top) {
+                int column = static_cast<int>(rockHead->position.x / 16.0f);
+                int row = static_cast<int>(rockHead->position.y / 16.0f);
+                delete rockHead;
+                Collisions::objects[column][row] = nullptr; // RockHead'i sil
+            }
+        } else if (collidedObject->type == Object::END_POINT) {
+            //chapter passed
+            LoadMap("../assets/textures/map2.png");
         }
     }
+
+    // Yeni pozisyonu güncelle
+    position = newPosition;
+    shape.setPosition(position);
 
     if (jumpBuffActive) {
         jumpBuffTime += deltaTime;
@@ -191,7 +229,9 @@ void Character::Update(float deltaTime) {
             isHit = false;
         }
     } else {
-        if (velocity.y < 0) {
+        if (jumpCount == 2) {
+            textureToDraw = dJumpAnimation.GetTexture();
+        } else if (velocity.y < 0) {
             textureToDraw = Resources::textures["jump.png"];
         } else if (velocity.y > 0.2f && !isGrounded) {
             textureToDraw = Resources::textures["fall.png"];
@@ -220,7 +260,7 @@ int Character::GetHealth() {
 }
 
 void Character::Reset() {
-    health = 1;
+    health = defaultHealth;
     cherryCount = 0;
     isGrounded = false;
     isHit = false;
@@ -231,4 +271,5 @@ void Character::Reset() {
     jumpBuffTime = 0.0f;
     velocity = sf::Vector2f(0.0f, 0.0f);
     isDead = false;
+    position=sf::Vector2f(0.0f, 0.0f);
 }

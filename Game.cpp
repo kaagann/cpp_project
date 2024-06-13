@@ -18,6 +18,8 @@ Camera camera(320.0f);
 Character character{};
 
 bool paused{};
+std::string currentMap = "../assets/textures/map.png"; // Başlangıç haritası
+
 
 
 sf::Font font{};
@@ -27,6 +29,10 @@ sf::Text restartText("Press SPACE to start the game", font);
 
 
 sf::RectangleShape backgroundShape(sf::Vector2f(1.0f, 1.0f));
+
+
+
+
 
 void Restart() {
     for (auto& column : Collisions::objects) {
@@ -42,7 +48,7 @@ void Restart() {
     character.Reset();
 
     sf::Image image;
-    image.loadFromFile("../assets/textures/map.png");
+    image.loadFromFile(currentMap);
     character.position = map.CreateFromImage(image);
 
     character.Begin();
@@ -71,20 +77,18 @@ void Begin(sf::RenderWindow& window) {
     }
 
 
-    for (auto& file : std::filesystem::directory_iterator("./assets/sounds/"))
-    {
-        if (file.is_regular_file() && (file.path().extension() == ".mp3" || file.path().extension() == ".wav"))
-        {
+    /*for (auto& file : std::filesystem::directory_iterator("./assets/sounds/")) {
+        if (file.is_regular_file() && (file.path().extension() == ".mp3" || file.path().extension() == ".wav")) {
             Resources::sounds[file.path().filename().string()].loadFromFile(
                 file.path().string());
         }
-    }
+    }*/
 
 
     //map.CreateMap(10, 10);
     //character.position = map.LoadFromFile("../map.txt");
     sf::Image image;
-    image.loadFromFile("../assets/textures/map.png");
+    image.loadFromFile(currentMap);
     character.position = map.CreateFromImage(image);
 
     character.Begin();
@@ -201,7 +205,10 @@ void RenderUI(Renderer &renderer) {
 
         renderer.target.draw(restartText);
     }
-
 }
 
+void LoadMap(const std::string& mapFile) {
+    currentMap = mapFile;
+    Restart();
+}
 

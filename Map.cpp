@@ -11,6 +11,7 @@
 #include <filesystem>
 
 #include "CollectableItem.h"
+#include "EndPoint.h"
 #include "OrangeItem.h"
 #include "RockHead.h"
 #include "Spike.h"
@@ -121,6 +122,11 @@ sf::Vector2f Map::CreateFromImage(const sf::Image& image) {
                 objectGrid[x][y] = item;
             } else if (isColor(color, 226, 116, 62)) {
                 Object* item = new OrangeItem();
+                item->position = sf::Vector2f(cellSize * x + cellSize / 2.0f,
+                    cellSize * y + cellSize / 2.0f);
+                objectGrid[x][y] = item;
+            } else if (isColor(color, 255, 222, 0)) {
+                Object* item = new EndPoint();
                 item->position = sf::Vector2f(cellSize * x + cellSize / 2.0f,
                     cellSize * y + cellSize / 2.0f);
                 objectGrid[x][y] = item;

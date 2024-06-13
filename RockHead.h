@@ -3,7 +3,7 @@
 
 class RockHead : public Object {
 public:
-    RockHead() : Object(Object::TRAP) {}
+    RockHead() : Object(Object::ROCK_HEAD) {}
     virtual void Begin() override;
     virtual void Update(float deltaTime) override;
     virtual void Render(Renderer &renderer) override;
