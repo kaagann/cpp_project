@@ -115,6 +115,7 @@ Object* CheckCollectableCollision(float x, float y, float width, float height) {
     return nullptr;
 }
 
+
 void Character::Update(float deltaTime) {
     float move = movementSpeed * deltaTime;
 
@@ -169,28 +170,24 @@ void Character::Update(float deltaTime) {
         newPosition.y = position.y;
         velocity.y = 0; // Zıplama hızını sıfırla
         isGrounded = true;
-        ResetJumpCount();
+        jumpCount = 0; // Zıplama sayacını sıfırla
     } else {
         isGrounded = false;
     }
 
-
+    // Yeni pozisyonu güncelle
+    position = newPosition;
+    shape.setPosition(position);
 
     Object* collidedObject = CheckCollectableCollision(newPosition.x - shape.getSize().x / 2, newPosition.y - shape.getSize().y / 2, shape.getSize().x, shape.getSize().y);
     if (collidedObject != nullptr) {
         if (collidedObject->type == Object::COLLECTABLE) {
             fmt::print("Collectable item alındı!");
-            cherryCount += 1;
         } else if (collidedObject->type == Object::TRAP) {
-            if (!isHit)
-                health -= 1; // Canı 1 azalt
+            health -= 1; // Canı 1 azalt
             isHit = true;
             hitTime = 0.0f; // Hit süresini başlat
             fmt::print("Tuzak: Can azaldı, kalan can: {}\n", health);
-        } else if (collidedObject->type == Object::JUMP_BUFF) {
-            jumpBuffActive = true;
-            jumpBuffTime = 0.0f; // Jump buff süresini başlat
-            jumpVelocity *= 1.2; // Zıplama hızını iki katına çıkar
         } else if (collidedObject->type == Object::ROCK_HEAD) {
             auto rockHead = dynamic_cast<RockHead*>(collidedObject);
             if (rockHead && position.y < rockHead->GetBounds().top) {
@@ -201,24 +198,8 @@ void Character::Update(float deltaTime) {
             }
         } else if (collidedObject->type == Object::END_POINT) {
             //chapter passed
-            LoadMap("../assets/textures/map2.png");
+            LoadMap("../assets/textures/map.png");
         }
-    }
-
-    // Yeni pozisyonu güncelle
-    position = newPosition;
-    shape.setPosition(position);
-
-    if (jumpBuffActive) {
-        jumpBuffTime += deltaTime;
-        if (jumpBuffTime >= jumpBuffDuration) {
-            jumpBuffActive = false;
-            jumpVelocity /= 1.2; // Zıplama hızını eski haline getir
-        }
-    }
-
-    if (health <= 0) {
-        isDead = true;
     }
 
     if (isHit) {
@@ -242,6 +223,7 @@ void Character::Update(float deltaTime) {
         }
     }
 }
+
 
 void Character::Draw(Renderer &renderer) {
     renderer.Draw(textureToDraw, position, sf::Vector2f(facingLeft ? -32.0f : 32.0f, 32.0f), angle);
@@ -271,5 +253,4 @@ void Character::Reset() {
     jumpBuffTime = 0.0f;
     velocity = sf::Vector2f(0.0f, 0.0f);
     isDead = false;
-    position=sf::Vector2f(0.0f, 0.0f);
 }

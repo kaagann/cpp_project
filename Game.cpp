@@ -18,7 +18,7 @@ Camera camera(320.0f);
 Character character{};
 
 bool paused{};
-std::string currentMap = "../assets/textures/map.png"; // Başlangıç haritası
+std::string currentMap = "../assets/textures/map2.png"; // Başlangıç haritası
 
 
 
@@ -50,7 +50,6 @@ void Restart() {
     sf::Image image;
     image.loadFromFile(currentMap);
     character.position = map.CreateFromImage(image);
-
     character.Begin();
 
     auto x = 0;
@@ -85,8 +84,6 @@ void Begin(sf::RenderWindow& window) {
     }*/
 
 
-    //map.CreateMap(10, 10);
-    //character.position = map.LoadFromFile("../map.txt");
     sf::Image image;
     image.loadFromFile(currentMap);
     character.position = map.CreateFromImage(image);
@@ -131,7 +128,6 @@ void Begin(sf::RenderWindow& window) {
 
 
 void Update(float deltaTime) {
-
     if (character.isDead && sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
         Restart();
 
@@ -145,8 +141,6 @@ void Update(float deltaTime) {
 
     character.Update(deltaTime);
     camera.position = character.position;
-
-
 
 
     auto x = 0;
@@ -211,4 +205,3 @@ void LoadMap(const std::string& mapFile) {
     currentMap = mapFile;
     Restart();
 }
-
